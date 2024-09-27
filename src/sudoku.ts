@@ -135,6 +135,11 @@ export const handleGenerateSudoku = async (
     // Recursive portion to attempt to fill each cell and backtrack (return one step) in case
     // it's not a valid number or reaches a dead end.
     let level = 0;
+    const ids = new Set();
+    if (window.graphRef) {
+        window.graphRef.current.nodes.clear();
+        window.graphRef.current.edges.clear();
+    }
     const pickAndFillCell = async (
         recursiveTarget: number[][],
         level: number,
@@ -204,13 +209,15 @@ export const handleGenerateSudoku = async (
                 currentId = `${level}@${rowWithEmptyCell}@${emptyCellColumn}@${numberAttempt}`;
 
                 if (
-                    !(
-                        window.graphRef as MutableRef<{
-                            nodes: DataSet<never, "id">;
-                            edges: DataSet<never, "id">;
-                        }>
-                    ).current.nodes.get(currentId)
+                    // !(
+                    //     window.graphRef as MutableRef<{
+                    //         nodes: DataSet<never, "id">;
+                    //         edges: DataSet<never, "id">;
+                    //     }>
+                    // ).current.nodes.get(currentId)
+                    !ids.has(currentId)
                 ) {
+                    ids.add(currentId);
                     (
                         window.graphRef as MutableRef<{
                             nodes: DataSet<never, "id">;
@@ -281,7 +288,7 @@ export const handleGenerateSudoku = async (
                     // Was able to pick a number, return true
                     // return true;
                     return new Promise((resolver) => {
-                        setTimeout(() => resolver(true), 100);
+                        setTimeout(() => resolver(true), 10);
                     });
                 }
 
@@ -314,7 +321,7 @@ export const handleGenerateSudoku = async (
 
         // If no valid number could be placed, backtrack
         return new Promise((resolver) => {
-            setTimeout(() => resolver(false), 100);
+            setTimeout(() => resolver(false), 10);
         });
     };
 

@@ -60,30 +60,34 @@ export function App() {
     // }, []);
 
     useEffect(() => {
-        // create an array with nodes
-        var nodes = graphRef.current.nodes;
+        // Only render the graph at the end of the table.
+        // Rendering as the algorithm builds the board is very slow.
+        if (sudoku.flat().filter((cell) => cell !== 0).length >= 81) {
+            // create an array with nodes
+            var nodes = graphRef.current.nodes;
 
-        // create an array with edges
-        var edges = graphRef.current.edges;
+            // create an array with edges
+            var edges = graphRef.current.edges;
 
-        // create a network
-        var container = document.getElementById("vis");
-        var data = {
-            nodes: nodes,
-            edges: edges,
-        };
-        var options = {
-            layout: {
-                hierarchical: true,
-            },
-            edges: {
-                color: "#000000",
-            },
-            interaction: { hover: true },
-        };
-        var network = new Network(container, data, options);
-        window.network = network;
-    }, []);
+            // create a network
+            var container = document.getElementById("vis");
+            var data = {
+                nodes: nodes,
+                edges: edges,
+            };
+            var options = {
+                layout: {
+                    hierarchical: true,
+                },
+                edges: {
+                    color: "#000000",
+                },
+                interaction: { hover: true },
+            };
+            var network = new Network(container, data, options);
+            window.network = network;
+        }
+    }, [sudoku]);
 
     var events = {
         select: function (event) {
