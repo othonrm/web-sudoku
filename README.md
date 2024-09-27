@@ -10,6 +10,9 @@ Web Sudoku is a web-based application for playing Sudoku. This project is design
 - An opportunity to learn about brute force, backtracking algorithms, recursive functions, and a lot more.
 - Get back into the "game" development world :D
 
+### Disclaimer
+This project was created solely for learning and leisure purposes. As such, it does not adhere to best practices, coding guidelines, or performance optimizations. The focus was on experimenting with algorithms, rather than on code quality or efficiency improvements. Use (OR not) at your own discretion, as the project may contain inefficient or unconventional implementations.
+
 ## Features
 Top ones (TODO):
 - Mobile friendly
@@ -60,5 +63,5 @@ ___
 - [Introduction to depth-first search](https://www.geeksforgeeks.org/depth-first-search-or-dfs-for-a-graph/)
 - [How to generate Sudoku boards with unique solutions](https://stackoverflow.com/a/7280517)
 
-## License
+### License
 This project is open-source and available under the [MIT License](https://opensource.org/license/MIT).
