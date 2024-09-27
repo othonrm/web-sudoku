@@ -4,7 +4,7 @@
 Web Sudoku is a web-based application for playing Sudoku. This project is designed to provide an interactive and user-friendly interface for solving Sudoku puzzles online.
 
 ## Why?
-- Chanllenge myself
+- Challenge myself
 - I like sudoku
 - The Sudoku app I have has very annoying ads every other number input or when generating a new board
 - An opportunity to learn about brute force, backtracking algorithms, recursive functions, and a lot more.
