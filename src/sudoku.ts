@@ -116,8 +116,6 @@ export const handleGenerateSudoku = async (
     const sudokuWidth = 9;
     const sudokuHeight = 9;
 
-    const cellAmount = sudokuWidth * sudokuHeight;
-
     // Fill all slots with zero, in the app zero is rendered as an empty cell
     for (let rowIndex = 0; rowIndex < sudokuWidth; rowIndex++) {
         newSudoku.push([]);

@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
 import "./app.css";
-import {
-    getGroupForCell,
-    handleCheckInvalidCells,
-    handleGenerateSudoku,
-} from "./sudoku";
+import { handleCheckInvalidCells, handleGenerateSudoku } from "./sudoku";
 
 export function App() {
     const generateEmptyBoard = (sudokuWidth: number, sudokuHeight: number) => {
