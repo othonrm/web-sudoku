@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import "./app.css";
 import { handleCheckInvalidCells, handleGenerateSudoku } from "./sudoku";
+import { DataSet, Network } from "vis-network/standalone/umd/vis-network.min";
 
 export function App() {
     const generateEmptyBoard = (sudokuWidth: number, sudokuHeight: number) => {
@@ -22,6 +23,73 @@ export function App() {
     const [inputTargetCell, setInputTargetCell] = useState<
         [number, number] | undefined
     >();
+
+    // const [graph, setGraph] = useState({
+    //     nodes: new DataSet([]),
+    //     edges: new DataSet([]),
+    // });
+    const graphRef = useRef({
+        nodes: new DataSet([]),
+        edges: new DataSet([]),
+    });
+
+    window.graphRef = graphRef;
+
+    const visRef = useRef();
+
+    window.visRef = visRef.current;
+
+    // useEffect(() => {
+    //     graphRef.current.nodes.add([
+    //         {
+    //             id: `${0}@${0}@${1}`,
+    //             label: `Cell: ${1}`,
+    //         },
+    //         {
+    //             id: `${0}@${1}@${2}`,
+    //             label: `Cell: ${2}`,
+    //         },
+    //     ]);
+
+    //     graphRef.current.edges.add([
+    //         {
+    //             from: `${0}@${0}@${1}`,
+    //             to: `${0}@${1}@${2}`,
+    //         },
+    //     ]);
+    // }, []);
+
+    useEffect(() => {
+        // create an array with nodes
+        var nodes = graphRef.current.nodes;
+
+        // create an array with edges
+        var edges = graphRef.current.edges;
+
+        // create a network
+        var container = document.getElementById("vis");
+        var data = {
+            nodes: nodes,
+            edges: edges,
+        };
+        var options = {
+            layout: {
+                hierarchical: true,
+            },
+            edges: {
+                color: "#000000",
+            },
+            interaction: { hover: true },
+        };
+        var network = new Network(container, data, options);
+        window.network = network;
+    }, []);
+
+    var events = {
+        select: function (event) {
+            var { nodes, edges } = event;
+        },
+    };
 
     // useEffect(() => {
     //     if (sudoku.length === 0) {
@@ -235,6 +303,7 @@ export function App() {
                     </p>
                 </small>
             </small>
+            <div id="vis"></div>
         </>
     );
 }

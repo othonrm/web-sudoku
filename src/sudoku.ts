@@ -1,4 +1,6 @@
-import { Dispatch, StateUpdater } from "preact/hooks";
+import { Dispatch, MutableRef, StateUpdater } from "preact/hooks";
+import { DataSet } from "vis-data";
+import { Network } from "vis-network";
 
 export const getGroupForCell = (
     sudoku: number[][],
@@ -132,8 +134,11 @@ export const handleGenerateSudoku = async (
 
     // Recursive portion to attempt to fill each cell and backtrack (return one step) in case
     // it's not a valid number or reaches a dead end.
+    let level = 0;
     const pickAndFillCell = async (
-        recursiveTarget: number[][]
+        recursiveTarget: number[][],
+        level: number,
+        previousId?: string
     ): Promise<boolean> => {
         if (safetyCount >= valveLimit) {
             throw new Error(`reached limit of iterations: ${safetyCount}`);
@@ -169,6 +174,7 @@ export const handleGenerateSudoku = async (
         // goes one above and continues the iteration for that level.
         //
         // Note: as this array is not mixed/shuffled, it will always generate the same sudoku board.
+
         for (const numberAttempt of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
             const inUseByRow = recursiveTarget[rowWithEmptyCell].some(
                 (cell, idx) =>
@@ -192,11 +198,57 @@ export const handleGenerateSudoku = async (
             const notUsedNumber =
                 !inUseByRow && !inUseByColumn && !inUseByGroup;
 
+            let currentId;
+
+            if (window.graphRef) {
+                currentId = `${level}@${rowWithEmptyCell}@${emptyCellColumn}@${numberAttempt}`;
+
+                if (
+                    !(
+                        window.graphRef as MutableRef<{
+                            nodes: DataSet<never, "id">;
+                            edges: DataSet<never, "id">;
+                        }>
+                    ).current.nodes.get(currentId)
+                ) {
+                    (
+                        window.graphRef as MutableRef<{
+                            nodes: DataSet<never, "id">;
+                            edges: DataSet<never, "id">;
+                        }>
+                    ).current.nodes.add([
+                        {
+                            id: currentId,
+                            label: `${numberAttempt}`,
+                        },
+                    ]);
+
+                    if (previousId) {
+                        (
+                            window.graphRef as MutableRef<{
+                                nodes: DataSet<never, "id">;
+                                edges: DataSet<never, "id">;
+                            }>
+                        ).current.edges.add([
+                            {
+                                from: previousId,
+                                to: currentId,
+                            },
+                        ]);
+                    }
+                }
+
+                if (window.network) {
+                    // (window.network as Network).redraw();
+                }
+            }
+
             if (notUsedNumber) {
                 // Place the number and move on to the next cell
                 recursiveTarget[rowWithEmptyCell][emptyCellColumn] =
                     numberAttempt;
                 //
+
                 // Uses setter for cool animation in conjunction with the promise return,
                 // leads to the algorithm "slowly" trying, and filling each cell.
                 if (stateSetter) {
@@ -223,11 +275,13 @@ export const handleGenerateSudoku = async (
                 // In case of a dead end, mark this cell as empty bellow,
                 // So the next recursive attempt will ignore the already filled ones,
                 // And start back from the one that is empty.
-                if (await pickAndFillCell(recursiveTarget)) {
+                if (
+                    await pickAndFillCell(recursiveTarget, level + 1, currentId)
+                ) {
                     // Was able to pick a number, return true
                     // return true;
                     return new Promise((resolver) => {
-                        setTimeout(() => resolver(true), 10);
+                        setTimeout(() => resolver(true), 100);
                     });
                 }
 
@@ -260,14 +314,14 @@ export const handleGenerateSudoku = async (
 
         // If no valid number could be placed, backtrack
         return new Promise((resolver) => {
-            setTimeout(() => resolver(false), 10);
+            setTimeout(() => resolver(false), 100);
         });
     };
 
     // Try catch in case something hits the maximum call stack.
     // Not really needed now that we have the safety valve.
     try {
-        await pickAndFillCell(newSudoku);
+        await pickAndFillCell(newSudoku, level);
     } catch (error) {
         console.error(error);
     }

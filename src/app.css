@@ -92,3 +92,9 @@
         }
     }
 }
+
+.vis-network {
+    border: 1px solid rgba(173, 173, 234, 0.188);
+    margin: 1rem 0;
+    aspect-ratio: 1/1;
+}
