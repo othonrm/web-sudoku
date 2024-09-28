@@ -29,10 +29,6 @@ export function App() {
     const [clues, setClues] = useState(32);
 
     useEffect(() => {
-        handleGenerateSudoku(setSudoku);
-    }, []);
-
-    useEffect(() => {
         handleCheckInvalidCells(sudoku, setInvalidCells);
     }, [sudoku]);
 
