@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import "./app.css";
-import { handleCheckInvalidCells, handleGenerateSudoku } from "./sudoku";
+import {
+    handleCheckInvalidCells,
+    handleGenerateSudoku,
+    handleSolveSudoku,
+} from "./sudoku";
 
 export function App() {
     const generateEmptyBoard = (sudokuWidth: number, sudokuHeight: number) => {
@@ -15,75 +19,55 @@ export function App() {
         return newSudoku;
     };
 
-    // generateEmptyBoard(9, 9)
-    // const [sudoku, setSudoku] = useState<number[][]>([]); // (handleGenerateSudoku());
     const [sudoku, setSudoku] = useState<number[][]>(generateEmptyBoard(9, 9));
     const [invalidCells, setInvalidCells] = useState<boolean[][]>([]);
     const [inputTargetCell, setInputTargetCell] = useState<
         [number, number] | undefined
     >();
 
-    // useEffect(() => {
-    //     if (sudoku.length === 0) {
-    //         let newSudoku = [];
-    //         // setSudoku(handleGenerateSudoku());
-    //         let count = 0;
-    //         do {
-    //             newSudoku = handleGenerateSudoku();
-    //             count++;
-    //         } while (
-    //             newSudoku?.some((row) =>
-    //                 row.some(
-    //                     (cell) => cell === 0 || cell !== undefined
-    //                     //
-    //                 )
-    //             )
-    //         );
-    //         console.log(`FOUND SUDOKU AFTER ${count} ITERATIONS`);
-    //         console.log(newSudoku);
-    //         setSudoku(newSudoku);
-    //     }
-    // }, []);
+    useEffect(() => {
+        handleGenerateSudoku(setSudoku);
+    }, []);
 
     useEffect(() => {
         handleCheckInvalidCells(sudoku, setInvalidCells);
     }, [sudoku]);
 
-    const handleUpdateSudokuCell = (x: number, y: number, value: number) => {
-        setSudoku((prev) => {
-            // Replace cell with new value
-            return prev.map((group, groupIndex) => {
-                if (groupIndex === x) {
-                    return group.map((cell, cellIndex) => {
-                        if (cellIndex === y) {
-                            return value;
-                        }
-                        return cell;
-                    });
-                }
-                return group;
+    useEffect(() => {
+        const handleUpdateSudokuCell = (
+            x: number,
+            y: number,
+            value: number
+        ) => {
+            setSudoku((prev) => {
+                // Replace cell with new value
+                return prev.map((group, groupIndex) => {
+                    if (groupIndex === x) {
+                        return group.map((cell, cellIndex) => {
+                            if (cellIndex === y) {
+                                return value;
+                            }
+                            return cell;
+                        });
+                    }
+                    return group;
+                });
             });
-        });
-    };
+        };
 
-    const handleKeyDown = useCallback(
-        (ev: KeyboardEvent) => {
+        const handleKeyDown = (ev: KeyboardEvent) => {
             console.log(inputTargetCell);
-            if (Number(ev.key) > 0 && Number(ev.key) < 10 && inputTargetCell) {
-                console.log("set sudoku");
+            if (Number(ev.key) >= 0 && Number(ev.key) < 10 && inputTargetCell) {
                 handleUpdateSudokuCell(...inputTargetCell, Number(ev.key));
             }
-        },
-        [inputTargetCell]
-    );
+        };
 
-    useEffect(() => {
         window.addEventListener("keydown", handleKeyDown);
 
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [handleKeyDown]);
+    }, [inputTargetCell]);
 
     return (
         <>
@@ -159,11 +143,9 @@ export function App() {
                 </table>
             </div>
             <button
-                onClick={() => {
-                    handleGenerateSudoku(setSudoku);
-                    // TODO: this only generates the complete filled and valid board.
-                    // Next steps are:
-                    // - store the valid solution? not really necessary
+                onClick={async () => {
+                    const s = await handleGenerateSudoku();
+                    setSudoku(s);
                     // - blank out random spaces
                     // - optional: to increase difficulty,
                     //      - blank more spaces and check for less possible solutions
@@ -172,6 +154,11 @@ export function App() {
                 }}
             >
                 Generate Sudoku
+            </button>
+            <br />
+            <br />
+            <button onClick={() => handleSolveSudoku(sudoku)}>
+                Solve Board
             </button>
 
             <small>

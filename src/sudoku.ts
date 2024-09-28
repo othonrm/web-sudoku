@@ -10,16 +10,10 @@ export const getGroupForCell = (
 
     const group = [];
     for (let r = 0; r < 3; r++) {
-        // console.log([
-        //     sudoku[r + groupY * 3][0 + groupX * 3],
-        //     sudoku[r + groupY * 3][1 + groupX * 3],
-        //     sudoku[r + groupY * 3][2 + groupX * 3],
-        // ]);
         for (let c = 0; c < 3; c++) {
             group.push(sudoku[r + groupY * 3][c + groupX * 3]);
         }
     }
-    // console.log("______");
     return group;
 };
 
@@ -28,8 +22,6 @@ export const handleCheckInvalidCells = (
     stateSetter?: Dispatch<StateUpdater<boolean[][]>>
 ): boolean | void => {
     if (validationTarget.length === 0) return;
-
-    console.log("checking invalid cells");
 
     let newInvalidCells = new Array<boolean[]>();
     for (
@@ -69,20 +61,6 @@ export const handleCheckInvalidCells = (
                         value === validationTarget[groupIndex][cellIndex]
                 );
 
-            // // Check group -- old approach, can't really tell if it works
-            // inUse =
-            //     inUse ||
-            //     sudoku.some((group, idx) => {
-            //         if (idx > 2) return false;
-            //         return group.some(
-            //             (cell, cellIdx) =>
-            //                 cellIdx < 3 &&
-            //                 idx !== groupIndex &&
-            //                 cellIdx !== cellIndex &&
-            //                 cell === sudoku[groupIndex][cellIndex]
-            //         );
-            //     });
-
             newInvalidCells[groupIndex].push(inUse);
         }
     }
@@ -94,10 +72,6 @@ export const handleCheckInvalidCells = (
     const isInvalidSudoku = newInvalidCells.some((group) =>
         group.some((cell) => cell)
     );
-
-    if (!isInvalidSudoku) {
-        console.log("VALID SUDOKU!");
-    }
 
     return isInvalidSudoku;
 };
@@ -124,8 +98,6 @@ export const handleGenerateSudoku = async (
             newSudoku[rowIndex].push(0);
         }
     }
-
-    console.log("newSudoku: ", newSudoku);
 
     let safetyCount = 0;
     const valveLimit = 20_000;
@@ -227,7 +199,7 @@ export const handleGenerateSudoku = async (
                     // Was able to pick a number, return true
                     // return true;
                     return new Promise((resolver) => {
-                        setTimeout(() => resolver(true), 10);
+                        setTimeout(() => resolver(true), stateSetter ? 10 : 0);
                     });
                 }
 
@@ -260,7 +232,7 @@ export const handleGenerateSudoku = async (
 
         // If no valid number could be placed, backtrack
         return new Promise((resolver) => {
-            setTimeout(() => resolver(false), 10);
+            setTimeout(() => resolver(false), stateSetter ? 10 : 0);
         });
     };
 
@@ -277,4 +249,100 @@ export const handleGenerateSudoku = async (
         stateSetter(newSudoku);
     }
     return newSudoku;
+};
+
+export const handleSolveSudoku = (targetBoard: number[][]): number[] => {
+    // Copy the targetBoard using JSON.
+    // Ensures we are not just referencing it,
+    // this allows us to apply or not the found solution at the end.
+    const tempBoard = JSON.parse(JSON.stringify(targetBoard));
+    console.log("SOLVING SUDOKU");
+
+    const solution: number[] = [];
+    let safetyCount = 0;
+    const valveLimit = 20_000;
+
+    const pickAndFillCell = (recursiveTarget: number[][]): boolean => {
+        if (safetyCount >= valveLimit) {
+            throw new Error(`reached limit of iterations: ${safetyCount}`);
+        }
+        safetyCount++;
+
+        const hasEmptyCell = recursiveTarget.some((row) =>
+            row.some((cell) => cell === 0 || cell === undefined)
+        );
+
+        if (!hasEmptyCell) {
+            return true;
+        }
+
+        // Find first row with an empty cell (value = 0 | undefined)
+        const rowWithEmptyCell = recursiveTarget.findIndex((row) =>
+            row.some((cell) => cell === 0 || cell === undefined)
+        );
+        // Find first empty cell for that given row (value = 0 | undefined)
+        const emptyCellColumn = recursiveTarget[rowWithEmptyCell].findIndex(
+            (cell) => cell === 0 || cell === undefined
+        );
+
+        const possibleNumbers = Array.from(Array(9).keys());
+        for (let index = 0; index < 9; index++) {
+            // Pick random numbers from 1 to 9 that weren't used yet.
+            // It seems to solve faster than always trying
+            // With the same ascending order [1,2,3,4,5,6,7,8,9].
+            const randomIndex = Math.floor(
+                Math.random() * possibleNumbers.length
+            );
+            const numberAttempt = possibleNumbers[randomIndex] + 1;
+            possibleNumbers.splice(randomIndex, 1);
+
+            const inUseByRow = recursiveTarget[rowWithEmptyCell].some(
+                (cell, idx) =>
+                    cell !== 0 &&
+                    emptyCellColumn !== idx &&
+                    cell === numberAttempt
+            );
+            const inUseByColumn = recursiveTarget.some(
+                (row, idx) =>
+                    idx !== rowWithEmptyCell &&
+                    row[emptyCellColumn] !== 0 &&
+                    row[emptyCellColumn] === numberAttempt
+            );
+
+            const inUseByGroup = getGroupForCell(
+                recursiveTarget,
+                rowWithEmptyCell,
+                emptyCellColumn
+            ).some((value) => value === numberAttempt);
+
+            const notUsedNumber =
+                !inUseByRow && !inUseByColumn && !inUseByGroup;
+
+            if (notUsedNumber) {
+                recursiveTarget[rowWithEmptyCell][emptyCellColumn] =
+                    numberAttempt;
+                solution.push(numberAttempt);
+
+                if (pickAndFillCell(recursiveTarget)) {
+                    return true;
+                }
+
+                recursiveTarget[rowWithEmptyCell][emptyCellColumn] = 0;
+                solution.pop();
+            }
+        }
+
+        return false;
+    };
+
+    pickAndFillCell(tempBoard);
+    if (handleCheckInvalidCells(tempBoard)) {
+        console.log("FINISH SOLVING - But with invalid solution :'(");
+        return [];
+    }
+    {
+        console.log("FINISH SOLVING");
+        console.log(`Solution found after ${safetyCount} tries: `, solution);
+        return solution;
+    }
 };
