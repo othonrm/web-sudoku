@@ -6,6 +6,7 @@ import {
     handleSolveSudoku,
 } from "./sudoku";
 import EraserIcon from "./assets/icons/eraser.svg?react";
+import { TargetedEvent } from "preact/compat";
 
 export function App() {
     const generateEmptyBoard = (sudokuWidth: number, sudokuHeight: number) => {
@@ -25,6 +26,7 @@ export function App() {
     const [inputTargetCell, setInputTargetCell] = useState<
         [number, number] | undefined
     >();
+    const [clues, setClues] = useState(32);
 
     useEffect(() => {
         handleGenerateSudoku(setSudoku);
@@ -172,10 +174,34 @@ export function App() {
                 </button>
             </div>
 
+            <div>
+                <input
+                    type="range"
+                    id="clues"
+                    name="clues"
+                    min="1"
+                    max="64"
+                    step="1"
+                    onChange={(e: TargetedEvent<HTMLInputElement>) =>
+                        setClues(Number(e.currentTarget.value) || 32)
+                    }
+                    value={clues}
+                />
+                <label for="clues">Difficulty</label>
+            </div>
+            <br />
+
             <button
                 onClick={async () => {
                     setSudoku([]);
-                    const s = await handleGenerateSudoku();
+                    let s = await handleGenerateSudoku();
+                    for (let index = 0; index < clues; index++) {
+                        const randomRow = Math.floor(Math.random() * s.length);
+                        const randomColumn = Math.floor(
+                            Math.random() * s[randomRow].length
+                        );
+                        s[randomRow][randomColumn] = 0;
+                    }
                     setSudoku(s);
                     // - blank out random spaces
                     // - optional: to increase difficulty,
