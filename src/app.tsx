@@ -1,10 +1,11 @@
-import { useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import "./app.css";
 import {
     handleCheckInvalidCells,
     handleGenerateSudoku,
     handleSolveSudoku,
 } from "./sudoku";
+import EraserIcon from "./assets/icons/eraser.svg?react";
 
 export function App() {
     const generateEmptyBoard = (sudokuWidth: number, sudokuHeight: number) => {
@@ -33,12 +34,8 @@ export function App() {
         handleCheckInvalidCells(sudoku, setInvalidCells);
     }, [sudoku]);
 
-    useEffect(() => {
-        const handleUpdateSudokuCell = (
-            x: number,
-            y: number,
-            value: number
-        ) => {
+    const handleUpdateSudokuCell = useCallback(
+        (x: number, y: number, value: number) => {
             setSudoku((prev) => {
                 // Replace cell with new value
                 return prev.map((group, groupIndex) => {
@@ -53,8 +50,11 @@ export function App() {
                     return group;
                 });
             });
-        };
+        },
+        []
+    );
 
+    useEffect(() => {
         const handleKeyDown = (ev: KeyboardEvent) => {
             console.log(inputTargetCell);
             if (Number(ev.key) >= 0 && Number(ev.key) < 10 && inputTargetCell) {
@@ -127,10 +127,16 @@ export function App() {
                                                         }
                                                 `}
                                             onClick={() => {
-                                                setInputTargetCell([
-                                                    groupIndex,
-                                                    cellIndex,
-                                                ]);
+                                                setInputTargetCell((prev) =>
+                                                    prev &&
+                                                    prev[0] === groupIndex &&
+                                                    prev[1] === cellIndex
+                                                        ? undefined
+                                                        : [
+                                                              groupIndex,
+                                                              cellIndex,
+                                                          ]
+                                                );
                                             }}
                                         >
                                             {cell ? cell : ""}
@@ -142,8 +148,33 @@ export function App() {
                     </tbody>
                 </table>
             </div>
+
+            <div class="digital-numeric-input">
+                {Array.from(Array(9).keys()).map((key) => (
+                    <button
+                        class={!inputTargetCell ? "disabled" : ""}
+                        onClick={() =>
+                            inputTargetCell &&
+                            handleUpdateSudokuCell(...inputTargetCell, key + 1)
+                        }
+                    >
+                        {key + 1}
+                    </button>
+                ))}
+                <button
+                    class={!inputTargetCell ? "disabled" : ""}
+                    onClick={() =>
+                        inputTargetCell &&
+                        handleUpdateSudokuCell(...inputTargetCell, 0)
+                    }
+                >
+                    <EraserIcon />
+                </button>
+            </div>
+
             <button
                 onClick={async () => {
+                    setSudoku([]);
                     const s = await handleGenerateSudoku();
                     setSudoku(s);
                     // - blank out random spaces
