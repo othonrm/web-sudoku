@@ -139,9 +139,17 @@ export const handleGenerateSudoku = async (
         // If we reach the end of the for loop with all possibilities being invalid (return false)
         // It means the upper level is also an invalid option which kill this level,
         // goes one above and continues the iteration for that level.
-        //
-        // Note: as this array is not mixed/shuffled, it will always generate the same sudoku board.
-        for (const numberAttempt of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+        const possibleNumbers = Array.from(Array(9).keys());
+        for (let index = 0; index < 9; index++) {
+            // Pick random numbers from 1 to 9 that weren't used yet.
+            // It seems to solve faster than always trying
+            // With the same ascending order [1,2,3,4,5,6,7,8,9].
+            const randomIndex = Math.floor(
+                Math.random() * possibleNumbers.length
+            );
+            const numberAttempt = possibleNumbers[randomIndex] + 1;
+            possibleNumbers.splice(randomIndex, 1);
+
             const inUseByRow = recursiveTarget[rowWithEmptyCell].some(
                 (cell, idx) =>
                     cell !== 0 &&
