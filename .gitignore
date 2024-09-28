@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Ts build info (local files to speed up next builds)
+*.tsbuildinfo
