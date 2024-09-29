@@ -259,16 +259,18 @@ export const handleGenerateSudoku = async (
     return newSudoku;
 };
 
-export const handleSolveSudoku = (targetBoard: number[][]): number[] => {
+export const handleSolveSudoku = (targetBoard: number[][]): string[] => {
     // Copy the targetBoard using JSON.
     // Ensures we are not just referencing it,
     // this allows us to apply or not the found solution at the end.
-    const tempBoard = JSON.parse(JSON.stringify(targetBoard));
+    let tempBoard = JSON.parse(JSON.stringify(targetBoard));
     console.log("SOLVING SUDOKU");
 
-    const solution: number[] = [];
+    let solution: number[] = [];
+    const foundSolutions: string[] = [];
+
     let safetyCount = 0;
-    const valveLimit = 20_000;
+    const valveLimit = 10_000_000;
 
     const pickAndFillCell = (recursiveTarget: number[][]): boolean => {
         if (safetyCount >= valveLimit) {
@@ -343,14 +345,52 @@ export const handleSolveSudoku = (targetBoard: number[][]): number[] => {
         return false;
     };
 
-    pickAndFillCell(tempBoard);
+    let attemptAccumulator = 0;
+
+    let solutionTries = 0;
+
+    const findManySolutions = () => {
+        solutionTries++;
+
+        // Reset the counter for each solution recursive search
+        attemptAccumulator += safetyCount;
+        safetyCount = 0;
+        pickAndFillCell(tempBoard);
+
+        const solutionString = solution.join("-");
+        if (!foundSolutions.includes(solutionString)) {
+            foundSolutions.push(solutionString);
+        }
+
+        if (solutionTries < 5000) {
+            solution = [];
+            tempBoard = JSON.parse(JSON.stringify(targetBoard));
+            findManySolutions();
+        } else {
+            console.log(`reached limit of solution attempts: ${solutionTries}`);
+            return;
+        }
+    };
+
+    findManySolutions();
+
     if (handleCheckInvalidCells(tempBoard)) {
         console.log("FINISH SOLVING - But with invalid solution :'(");
         return [];
     }
     {
         console.log("FINISH SOLVING");
-        console.log(`Solution found after ${safetyCount} tries: `, solution);
-        return solution;
+        if (foundSolutions.length > 1) {
+            console.log(
+                `${foundSolutions.length} unique solutions were found after ${attemptAccumulator} tries: `,
+                foundSolutions
+            );
+        } else {
+            console.log(
+                `Solution found after ${attemptAccumulator} tries: `,
+                solution
+            );
+        }
+        return foundSolutions;
     }
 };

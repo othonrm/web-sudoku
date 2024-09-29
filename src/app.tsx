@@ -175,15 +175,15 @@ export function App() {
                     type="range"
                     id="clues"
                     name="clues"
-                    min="1"
-                    max="64"
+                    min="12"
+                    max="60"
                     step="1"
                     onChange={(e: TargetedEvent<HTMLInputElement>) =>
                         setClues(Number(e.currentTarget.value) || 32)
                     }
                     value={clues}
                 />
-                <label for="clues">Difficulty</label>
+                <label for="clues">Difficulty ({clues})</label>
             </div>
             <br />
 
@@ -191,13 +191,52 @@ export function App() {
                 onClick={async () => {
                     setSudoku([]);
                     let s = await handleGenerateSudoku();
-                    for (let index = 0; index < clues; index++) {
+                    let startingClues = clues;
+                    const easierIndexes: string[] = [];
+                    let minimumPossibleSolutions = 0;
+                    let foundSolutions: string[] = [];
+                    for (let index = 0; index < startingClues; index++) {
                         const randomRow = Math.floor(Math.random() * s.length);
                         const randomColumn = Math.floor(
                             Math.random() * s[randomRow].length
                         );
+
+                        if (s[randomRow][randomColumn] === 0) {
+                            startingClues++;
+                            continue;
+                        }
+
+                        if (
+                            easierIndexes.includes(
+                                `${randomRow}-${randomColumn}`
+                            )
+                        ) {
+                            continue;
+                        }
+
+                        easierIndexes.push(`${randomRow}-${randomColumn}`);
+
+                        // Store the cell number before blanking it out
+                        const cellNumber = s[randomRow][randomColumn];
+                        // Take the number off
                         s[randomRow][randomColumn] = 0;
+                        // Check possible solutions
+                        foundSolutions = handleSolveSudoku(s);
+                        // In case the possible solutions is higher than the actual set,
+                        // put back the number.
+                        if (
+                            index > 0 &&
+                            foundSolutions.length > minimumPossibleSolutions
+                        ) {
+                            s[randomRow][randomColumn] = cellNumber;
+                        } else {
+                            minimumPossibleSolutions = foundSolutions.length;
+                        }
                     }
+                    console.log(
+                        "FINISHED GENERATING BOARD WITH FEWER SOLUTIONS POSSIBLE: ",
+                        foundSolutions
+                    );
                     setSudoku(s);
                     // - blank out random spaces
                     // - optional: to increase difficulty,
