@@ -76,27 +76,30 @@ export const handleCheckInvalidCells = (
     return isInvalidSudoku;
 };
 
-export const handleGenerateSudoku = async (
-    stateSetter?: Dispatch<StateUpdater<number[][]>>
+export const generateEmptyBoard = (
+    sudokuWidth: number,
+    sudokuHeight: number
 ) => {
-    console.log("GENERATING SUDOKU");
-    let newSudoku = new Array<number[]>();
-
-    // Clean the sudoku
-    if (stateSetter) {
-        stateSetter(newSudoku);
-    }
-
-    const sudokuWidth = 9;
-    const sudokuHeight = 9;
-
-    // Fill all slots with zero, in the app zero is rendered as an empty cell
+    const newSudoku: number[][] = [];
     for (let rowIndex = 0; rowIndex < sudokuWidth; rowIndex++) {
         newSudoku.push([]);
 
         for (let cellIndex = 0; cellIndex < sudokuHeight; cellIndex++) {
             newSudoku[rowIndex].push(0);
         }
+    }
+    return newSudoku;
+};
+
+export const handleGenerateSudoku = async (
+    stateSetter?: Dispatch<StateUpdater<number[][]>>
+) => {
+    console.log("GENERATING SUDOKU");
+
+    // Clean the sudoku
+    let newSudoku = generateEmptyBoard(9, 9);
+    if (stateSetter) {
+        stateSetter(newSudoku);
     }
 
     let safetyCount = 0;
@@ -362,12 +365,11 @@ export const handleSolveSudoku = (targetBoard: number[][]): string[] => {
             foundSolutions.push(solutionString);
         }
 
-        if (solutionTries < 5000) {
+        if (solutionTries < 1_000) {
             solution = [];
             tempBoard = JSON.parse(JSON.stringify(targetBoard));
             findManySolutions();
         } else {
-            console.log(`reached limit of solution attempts: ${solutionTries}`);
             return;
         }
     };
@@ -375,22 +377,10 @@ export const handleSolveSudoku = (targetBoard: number[][]): string[] => {
     findManySolutions();
 
     if (handleCheckInvalidCells(tempBoard)) {
-        console.log("FINISH SOLVING - But with invalid solution :'(");
+        console.log(
+            "FINISH SOLVING - But with invalid or incomplete solution :'("
+        );
         return [];
     }
-    {
-        console.log("FINISH SOLVING");
-        if (foundSolutions.length > 1) {
-            console.log(
-                `${foundSolutions.length} unique solutions were found after ${attemptAccumulator} tries: `,
-                foundSolutions
-            );
-        } else {
-            console.log(
-                `Solution found after ${attemptAccumulator} tries: `,
-                solution
-            );
-        }
-        return foundSolutions;
-    }
+    return foundSolutions;
 };

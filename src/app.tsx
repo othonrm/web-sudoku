@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
 import "./app.css";
 import {
+    generateEmptyBoard,
     handleCheckInvalidCells,
     handleGenerateSudoku,
     handleSolveSudoku,
@@ -9,24 +10,13 @@ import EraserIcon from "./assets/icons/eraser.svg?react";
 import { TargetedEvent } from "preact/compat";
 
 export function App() {
-    const generateEmptyBoard = (sudokuWidth: number, sudokuHeight: number) => {
-        const newSudoku: number[][] = [];
-        for (let rowIndex = 0; rowIndex < sudokuWidth; rowIndex++) {
-            newSudoku.push([]);
-
-            for (let cellIndex = 0; cellIndex < sudokuHeight; cellIndex++) {
-                newSudoku[rowIndex].push(0);
-            }
-        }
-        return newSudoku;
-    };
-
     const [sudoku, setSudoku] = useState<number[][]>(generateEmptyBoard(9, 9));
     const [invalidCells, setInvalidCells] = useState<boolean[][]>([]);
     const [inputTargetCell, setInputTargetCell] = useState<
         [number, number] | undefined
     >();
-    const [clues, setClues] = useState(32);
+    const [blanksAmount, setBlanksAmount] = useState(32);
+    const [generatingBoard, setGeneratingBoard] = useState(false);
 
     useEffect(() => {
         handleCheckInvalidCells(sudoku, setInvalidCells);
@@ -176,22 +166,39 @@ export function App() {
                     id="clues"
                     name="clues"
                     min="12"
-                    max="60"
+                    max="64"
                     step="1"
                     onChange={(e: TargetedEvent<HTMLInputElement>) =>
-                        setClues(Number(e.currentTarget.value) || 32)
+                        setBlanksAmount(Number(e.currentTarget.value) || 32)
                     }
-                    value={clues}
+                    value={blanksAmount}
                 />
-                <label for="clues">Difficulty ({clues})</label>
+                <label for="clues">
+                    Difficulty
+                    <br />
+                    <small>
+                        <small>
+                            ({blanksAmount} Blanks / {81 - blanksAmount} Clues)
+                            <br />
+                            {Math.floor(((81 - blanksAmount) * 100) / 81)}% of
+                            the board starts filled.
+                        </small>
+                    </small>
+                </label>
             </div>
             <br />
 
             <button
+                disabled={generatingBoard}
+                aria-disabled={generatingBoard}
                 onClick={async () => {
-                    setSudoku([]);
+                    if (generatingBoard) {
+                        return;
+                    }
+                    setSudoku(generateEmptyBoard(9, 9));
+                    setGeneratingBoard(true);
                     let s = await handleGenerateSudoku();
-                    let startingClues = clues;
+                    let startingClues = blanksAmount;
                     const easierIndexes: string[] = [];
                     let minimumPossibleSolutions = 0;
                     let foundSolutions: string[] = [];
@@ -237,7 +244,13 @@ export function App() {
                         "FINISHED GENERATING BOARD WITH FEWER SOLUTIONS POSSIBLE: ",
                         foundSolutions
                     );
+                    console.log("AMOUNT OF SOLUTIONS: ", foundSolutions.length);
+                    console.log(
+                        "FINAL AMOUNT OF CLUES: ",
+                        s.flat().filter((s) => s !== 0).length
+                    );
                     setSudoku(s);
+                    setGeneratingBoard(false);
                     // - blank out random spaces
                     // - optional: to increase difficulty,
                     //      - blank more spaces and check for less possible solutions
@@ -246,11 +259,6 @@ export function App() {
                 }}
             >
                 Generate Sudoku
-            </button>
-            <br />
-            <br />
-            <button onClick={() => handleSolveSudoku(sudoku)}>
-                Solve Board
             </button>
 
             <small>
