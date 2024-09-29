@@ -251,6 +251,7 @@ export function App() {
                     );
                     setSudoku(s);
                     setGeneratingBoard(false);
+                    setBlanksAmount(s.flat().filter((s) => s === 0).length);
                     // - blank out random spaces
                     // - optional: to increase difficulty,
                     //      - blank more spaces and check for less possible solutions
