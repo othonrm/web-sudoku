@@ -20,6 +20,7 @@ This project was created solely for learning and leisure purposes. As such, it d
 
 No AI-based autocompletion or chat conversation was used in the development of the algorithms implemented here.
 <br/><span style="font-size: .5rem">Just my Google PhD 😂</span>
+<br/><span style="font-size: .4rem">Err -- actually, this README was made by Github Copilot through the repository web page chat.</span>
 
 ## Features
 
