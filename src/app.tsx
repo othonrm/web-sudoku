@@ -321,6 +321,15 @@ export function App() {
                             https://stackoverflow.com/a/7280517
                         </a>
                     </p>
+                    <p>
+                        <a
+                            className="source-code-link"
+                            href="https://github.com/othonrm/web-sudoku"
+                            target="_blank"
+                        >
+                            Source Code
+                        </a>
+                    </p>
                 </small>
             </small>
         </>
